@@ -1,28 +1,32 @@
-# Algorithm Lab · v0.3
+# Algorithm Lab · v0.4.2
 
-交互式算法实验室，纯静态网站，支持本地双击打开与 GitHub Pages 部署。
+交互式算法实验室，纯静态网页，可通过 GitHub Pages 部署。
 
-## 本地运行
+## 已上线
+- LC1047 删除字符串中的所有相邻重复项
+- LC167 两数之和 II（左右双指针）
+- LC15 三数之和（排序 + 固定数字 + 双指针 + 去重）
 
-打开根目录 `index.html`，点击 LeetCode 1047 卡片进入模拟器。所有页面均显式链接到 `index.html`，避免本地 `file://` 打开目录索引。
+## 使用
+直接打开根目录 `index.html`，或将本目录中的所有文件上传到 GitHub 仓库根目录，使用 GitHub Pages 从 main / (root) 发布。
 
-## 结构
+## 目录
+- `index.html` 首页和搜索分类
+- `assets/theme.css` 原有共享主题
+- `assets/simulator.css` 新模拟器共享样式
+- `assets/simulator.js` 新模拟器的演示逻辑
+- `simulators/lc1047/index.html` 栈模拟器
+- `simulators/lc167/index.html` 双指针模拟器
+- `simulators/lc15/index.html` 三数之和模拟器
 
-- `index.html`：可搜索、筛选的算法目录
-- `assets/theme.css`：共享字体、配色和基础交互样式
-- `simulators/lc1047/index.html`：栈模拟器，包含逐步执行、自动播放、Python 代码高亮
+## 更新已有仓库
+在 GitHub 网页上传时，保留相同的目录结构。上传或替换根目录 `index.html`、`README.md`，新增 `assets/simulator.css`、`assets/simulator.js`，新增两个 `simulators` 子目录。旧的 LC1047 文件无需改动。
 
-## v0.3 视觉规范
 
-- 首页最大内容宽度 1440px；模拟器 1480px
-- 白底、浅灰边框、低饱和薄荷绿强调
-- 正文优先系统无衬线；代码优先 Cascadia Code / JetBrains Mono，未安装时自动回退 Consolas 等
-- 宽屏双栏，小屏单栏
+## v0.4.1 排版修正
 
-## 部署
+统一 LC167 与 LC15 的数组可视化：下标、数字方块、指针分别占独立行，避免标记重叠或错位。
 
-上传整个项目内容到 GitHub 仓库根目录，在 Settings → Pages 选择 Deploy from a branch / main / root。不要只上传单个 HTML，否则共享 CSS 和子页面无法正常访问。
+## v0.4.2 视觉规范
 
-## v0.3 纵向间距调整
-
-仅收紧 LC1047 模拟器左侧输入序列、栈、操作说明、控制区之间的空白；不改变功能、首页、双栏宽度及字体。
+详见 [`DESIGN.md`](DESIGN.md)。统一外链字号、复杂度的时间/空间列表，并为 LC15 添加对应 CSDN 题解。
