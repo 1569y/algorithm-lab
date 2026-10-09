@@ -1,0 +1,4 @@
+/* Algorithm Lab · shared visual system v0.2 */
+:root{--lab-ink:#202321;--lab-muted:#69736f;--lab-border:#e4e9e6;--lab-accent:#237a5b;--lab-soft:#e6f3ec;--lab-radius:18px;--lab-code:"Cascadia Code","JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace}
+html{color-scheme:light}body{font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0;-webkit-font-smoothing:antialiased}
+button,input{font-family:inherit}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #a4d6bc;outline-offset:2px}
