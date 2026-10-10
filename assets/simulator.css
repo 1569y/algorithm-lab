@@ -29,3 +29,237 @@
 .complexity li+li{margin-top:5px}
 .complexity strong{color:#202321}
 @media(max-width:540px){.links{font-size:15px;gap:10px 18px}.complexity{font-size:15px}}
+
+/* v0.4.3: LC20 有效的括号 — 字符串、横向栈与括号匹配检查 */
+.string-tokens{display:flex;gap:7px;flex-wrap:wrap;align-items:center;min-height:40px;margin-top:4px}
+.tok{min-width:32px;height:38px;border:1px solid #e2e7e4;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;font:15px var(--code);color:#3c4540}
+.tok.done{background:#f7faf8;border-color:#dde8e1;color:#8d9892}
+.tok.current{background:#e4f3ec;border-color:#6fae8f;color:#126c4d;font-weight:700;box-shadow:0 0 0 3px #eaf5ef}
+.tok.pending{color:#b2bcb6}
+.stack-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;min-height:52px;margin-top:4px}
+.scell{min-width:42px;min-height:46px;border:1px solid #dfe6e2;border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 6px;font:15px var(--code);color:#202321}
+.scell .tag{font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:10px;line-height:1;color:#8d9892}
+.scell.top{background:#e4f3ec;border-color:#6fae8f;color:#126c4d}
+.scell.top .tag{color:#126c4d;font-weight:700}
+.stack-empty{color:#a0aaa4;font-size:13px}
+.match-row{display:flex;gap:10px;flex-wrap:wrap}
+.match-cell{flex:1;min-width:92px;border:1px solid #e4e9e6;border-radius:11px;padding:10px 12px;background:#fbfcfb}
+.match-cell .k{display:block;font-size:12px;color:#66746c;margin-bottom:5px}
+.match-cell .v{font:16px var(--code);color:#202321}
+.match-note{color:#8d9892;font-size:13px;line-height:1.7;margin:0}
+.verdict{margin-top:11px;font:14px/1.7 var(--code);border-radius:10px;padding:10px 12px;border:1px solid #e4e9e6;background:#f8faf9;color:#56635c}
+.verdict.ok{border-color:#bcdcc9;background:#eaf5ef;color:#126c4d}
+.verdict.bad{border-color:#eec6c6;background:#fbeeee;color:#a53434}
+.verdict.pass{border-color:#d8e4dd;background:#f6faf8;color:#3f5f52}
+.verdict.fail{border-color:#e8bcbc;background:#fceeee;color:#9c2f2f;font-weight:600}
+.status.fail{border-color:#eec6c6;background:#fdf6f6}
+.status.fail strong{color:#b13f3f}
+.result.bad{background:#fdf6f6;border-color:#eec6c6}
+.result.bad code{color:#a53434}
+.result.ok code{color:#126c4d}
+@media(max-width:540px){.string-tokens{gap:5px}.tok{min-width:27px;height:33px;font-size:13px}.match-cell{min-width:78px;padding:9px 10px}.match-cell .v{font-size:14px}.stack-row{gap:7px}.scell{min-width:36px;min-height:40px;font-size:14px}}
+/* v0.4.3: LC20 窄屏按钮布局 —— 避免「▶ 自动播放」在窄屏被挤成两行。
+   作用域限定 .controls-stack（仅 LC20 使用），不影响 LC167 / LC15 的按钮。
+   断点取 540px，与既有 .controls button{flex:1} 的生效范围一致。 */
+@media(max-width:540px){
+  .controls-stack{gap:8px}
+  .controls-stack button{flex:0 1 auto;min-width:0;padding:10px 12px;font-size:14px;white-space:nowrap}
+}
+/* v0.4.3: LC20 布局稳定性 —— 让同一输入的各步骤之间控制按钮坐标保持不变。
+   预留高度按「实际最长内容」设定，不再多留空白：
+   ① 栈：不换行 + 容器内横向滚动，长栈不再撑高面板，并自动把栈顶滚入可见区；
+   ② 括号匹配区：CSS Grid 三列固定 + 结论独占一行，结论按「一行文字 + 上下内边距」预留 (46px)；
+      提示信息（左括号阶段/初始化）占用同样的保留空间并垂直居中，故切换阶段时高度不变；
+   ③ 步骤解释：按「三行文字 + 上下内边距」预留 (136px = 标题 21 + 间距 8 + 3×23.8 + 内边距 34)，
+      与 DESIGN.md 的字体/间距一致；390px 下实测最长解释正好 3 行。
+   全部用 body[data-mode="20"] 限定，仅 LC20 生效，不影响 LC1047 / LC167 / LC15。 */
+body[data-mode="20"] .stack-row{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;height:64px;padding-bottom:2px}
+body[data-mode="20"] .match-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-content:start;min-height:120px}
+body[data-mode="20"] .match-row .match-note{grid-column:1/-1;margin:0}
+/* 仅显示提示信息（左括号阶段/初始化）时，让文字在保留区域内垂直居中 */
+body[data-mode="20"] .match-row:has(.match-note){align-content:center}
+body[data-mode="20"] .match-row .verdict{grid-column:1/-1;margin-top:0;min-height:46px}
+body[data-mode="20"] .status{min-height:136px}
+@media(max-width:540px){
+  body[data-mode="20"] .match-row{gap:8px;min-height:118px}
+}
+/* 极窄屏适配：更窄时最长解释需要第 4 行，相应抬高预留，避免按钮随步骤跳动 */
+@media(max-width:375px){
+  body[data-mode="20"] .status{min-height:160px}
+}
+/* 再窄时匹配结论也会折成两行，连同卡片一起抬高预留 */
+@media(max-width:330px){
+  body[data-mode="20"] .match-row{min-height:156px}
+  body[data-mode="20"] .match-row .verdict{min-height:68px}
+}
+
+/* ==========================================================================
+   v0.4.4: LC20 快捷括号输入
+   输入框上方的六个括号按钮。单行横向滚动，避免换行改变输入区高度。
+   作用域限定 body[data-mode="20"]，仅 LC20 生效。
+   ========================================================================== */
+body[data-mode="20"] .quick-row{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;height:42px;margin:4px 0 8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+body[data-mode="20"] .quick-row::-webkit-scrollbar{display:none}
+body[data-mode="20"] .quick-label{flex:0 0 auto;font-size:13px;font-weight:650;color:#59655f;margin-right:2px}
+body[data-mode="20"] .quick-btn{flex:0 0 auto;width:38px;height:34px;padding:0;font:16px var(--code);border-radius:9px;background:#fff;border:1px solid #dfe5e1;color:var(--ink);cursor:pointer}
+body[data-mode="20"] .quick-btn:hover{background:#f5faf7;border-color:#bfd9cb}
+body[data-mode="20"] .quick-btn:active{background:#e4f3ec;border-color:#8bc3a7}
+
+/* ==========================================================================
+   v0.4.4: LC155 最小栈
+   左栏结构：操作序列（固定高度内部滚动）→ 双栈（高度由 JS 按该序列的最大栈深
+   一次性设定，因此不随步骤变化）→ 当前最小值（单行）→ 运行提示（单行）→
+   步骤解释（预留固定高度）。以上区域高度都与当前步骤无关，故控制按钮坐标稳定。
+   全部作用域限定 body[data-mode="155"]，不影响 LC1047 / LC167 / LC15 / LC20。
+   ========================================================================== */
+body[data-mode="155"] .mstk-valfield{flex:0 1 220px}
+body[data-mode="155"] .mstk-addrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+body[data-mode="155"] .mstk-addrow button{flex:0 0 auto;min-width:92px}
+body[data-mode="155"] .mstk-ops{height:196px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:#fbfcfb;padding:6px;display:flex;flex-direction:column;gap:4px}
+body[data-mode="155"] .mstk-op{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:9px;font:13px var(--code);background:#fff;border:1px solid transparent;cursor:pointer}
+body[data-mode="155"] .mstk-op:hover{border-color:#dfe7e2}
+body[data-mode="155"] .mstk-op.current{background:#e4f3ec;border-color:#8bc3a7;font-weight:700;color:#126c4d}
+body[data-mode="155"] .mstk-op.done{opacity:.55}
+body[data-mode="155"] .mstk-op.bad{border-color:#eec6c6;background:#fdf6f6;color:#a53434}
+body[data-mode="155"] .mstk-opidx{flex:0 0 auto;color:#8d9892}
+body[data-mode="155"] .mstk-oplabel{flex:1 1 auto;overflow-wrap:anywhere}
+body[data-mode="155"] .mstk-opbad{flex:0 0 auto;font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;color:#b13f3f}
+body[data-mode="155"] .mstk-opbtn{flex:0 0 auto;padding:3px 9px;font-size:12px;border-radius:8px;font-weight:600}
+body[data-mode="155"] .mstk-del{padding:3px 9px}
+body[data-mode="155"] .mstk-opinput{flex:0 0 92px;min-height:30px;padding:4px 8px;font:13px var(--code);border-radius:8px}
+body[data-mode="155"] .mstk-empty{margin:0;padding:8px 4px;font-size:13px;line-height:1.7;color:#8d9892}
+body[data-mode="155"] .mstk-opsfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px}
+body[data-mode="155"] .mstk-opsfoot .muted{font-size:12px}
+body[data-mode="155"] .mstk-opsbtns{display:flex;gap:8px;flex:0 0 auto}
+body[data-mode="155"] .mstk-duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+body[data-mode="155"] .mstk-side{min-width:0}
+body[data-mode="155"] .mstk-head{display:flex;flex-direction:column;gap:1px;margin-bottom:6px;font:700 13px var(--code);color:#202321}
+body[data-mode="155"] .mstk-sub{font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;font-weight:400;color:#8d9892}
+body[data-mode="155"] .mstk-view{height:148px;overflow-y:auto;overflow-x:hidden;border:1px solid var(--border);border-radius:12px;background:#fbfcfb;padding:8px;display:flex;flex-direction:column;gap:6px}
+body[data-mode="155"] .mstk-cell{flex:0 0 auto;height:40px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;border:1px solid #dfe6e2;border-radius:10px;background:#fff;font:15px var(--code);color:#202321}
+body[data-mode="155"] .mstk-cell.top{background:#e4f3ec;border-color:#6fae8f;color:#126c4d}
+body[data-mode="155"] .mstk-cell.just{border-color:#4f9d78;box-shadow:0 0 0 3px #eaf5ef}
+body[data-mode="155"] .mstk-val{font-weight:600}
+body[data-mode="155"] .mstk-tags{display:flex;gap:4px;flex:0 0 auto}
+body[data-mode="155"] .mstk-tag{padding:3px 5px;border-radius:5px;background:#e5f3ec;color:#217451;font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:10px;line-height:1;white-space:nowrap}
+body[data-mode="155"] .mstk-tag.new{background:#fdf0d9;color:#8a5a12}
+body[data-mode="155"] .mstk-empty-cell{font-size:13px;color:#a0aaa4}
+body[data-mode="155"] .mstk-minrow{display:flex;align-items:baseline;gap:10px;height:32px;margin-top:12px}
+body[data-mode="155"] .mstk-minlabel{flex:0 0 auto;font-size:13px;font-weight:700;color:#66736d}
+body[data-mode="155"] #minv{flex:0 0 auto;font:18px var(--code);color:#126c4d}
+body[data-mode="155"] #minv.pending{font-size:15px;color:#8a5a12}
+body[data-mode="155"] .mstk-minhint{flex:1 1 auto;min-width:0;font-size:12px;color:#8d9892;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body[data-mode="155"] .mstk-running{height:24px;line-height:24px;font-size:13px;color:#8d9892;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body[data-mode="155"] .mstk-running.on{color:#9a6412;font-weight:700}
+body[data-mode="155"] .status{min-height:136px}
+body[data-mode="155"] .mstk-meta{margin-top:6px;font-size:12px;color:#8d9892;min-height:16px}
+@media(max-width:540px){
+  body[data-mode="155"] .mstk-ops{height:156px}
+  body[data-mode="155"] .mstk-duo{gap:9px}
+  body[data-mode="155"] .mstk-cell{padding:0 7px;font-size:14px;gap:4px}
+  body[data-mode="155"] .mstk-view{padding:7px;gap:5px}
+  body[data-mode="155"] .mstk-tag{font-size:9px;padding:3px 4px}
+  body[data-mode="155"] .mstk-minrow{gap:7px}
+  body[data-mode="155"] #minv{font-size:16px}
+  /* 窄屏控制按钮按内容取宽并禁止折行，避免「自动播放」被压成两行 */
+  body[data-mode="155"] .controls{gap:8px}
+  body[data-mode="155"] .controls button{flex:0 1 auto;min-width:0;padding:10px 12px;font-size:14px;white-space:nowrap}
+}
+
+/* v0.4.4: LC155 极窄屏双栈改为上下排列。
+   并排时每列只有约 122~172px，遇到 11 位整数（如 -2147483648）时，
+   数值加上「栈顶」「变化」两个标签会超出单元、进入栈容器的 overflow-x:hidden
+   区域而被裁切（实测 320px 最大 51px，最差是「栈顶」标签超出单元边框 22px）。
+   改为上下排列后每列获得整栏宽度，数字与标签都能完整显示，且无需缩小字号。
+   实测 ≥431px 并排即无裁切，故断点取 430px。
+   该规则只依赖视口宽度、不依赖当前步骤，因此不改变控制按钮的坐标稳定性。 */
+@media(max-width:430px){
+  body[data-mode="155"] .mstk-duo{grid-template-columns:1fr;gap:14px}
+}
+
+/* ==========================================================================
+   v0.4.5: 「观察重点」模块统一为无序列表（LC1047 / 167 / 15 / 20 / 155 / 150 共用）
+   结构：<div class="explain"><h3>观察重点</h3><ul><li>…</li></ul></div>
+   每条只讲一个概念，重点词用 <strong> / <code> 强调；字体与项目符号全站一致。
+   ========================================================================== */
+.explain{font-size:15px;line-height:1.75}
+.explain h3{margin:0 0 9px;font-size:15px;font-weight:700;color:#202321}
+.explain ul{margin:0;padding-left:21px;display:flex;flex-direction:column;gap:7px}
+.explain li{padding-left:2px}
+.explain strong{color:#202321;font-weight:700}
+.explain code{font-family:var(--code);font-size:13px;background:#f1f5f3;border:1px solid #e6ece9;border-radius:5px;padding:1px 5px}
+
+/* ==========================================================================
+   v0.4.5: LC150 逆波兰表达式求值
+   左栏中高度会随步骤变化的区域共四处，全部锁定，使控制按钮在同一输入的各步骤之间
+   坐标稳定：① Token 序列单行 + 容器内横向滚动；② 计算栈按整条序列的最大栈深一次性
+   定高，超出部分在容器内纵向滚动；③ 当前运算面板与 ④ 步骤解释框的高度按整条序列
+   预计算（见 simulator-rpn.js 的 measureHeights），与当前步骤无关。
+   作用域限定 body[data-mode="150"]，不影响 LC1047 / 167 / 15 / 20 / 155。
+   ========================================================================== */
+body[data-mode="150"] .rpn-quick{display:flex;flex-wrap:nowrap;align-items:center;gap:6px;height:42px;margin:0 0 9px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+body[data-mode="150"] .rpn-quick::-webkit-scrollbar{display:none}
+body[data-mode="150"] .rpn-quick-label{flex:0 0 auto;font-size:13px;font-weight:650;color:#59655f;margin-right:2px}
+body[data-mode="150"] .rpn-op{flex:0 0 auto;min-width:40px;height:34px;padding:0 10px;font:16px var(--code);border-radius:9px;background:#fff;border:1px solid #dfe5e1;color:var(--ink);cursor:pointer}
+body[data-mode="150"] .rpn-op:hover{background:#f5faf7;border-color:#bfd9cb}
+body[data-mode="150"] .rpn-op:active{background:#e4f3ec;border-color:#8bc3a7}
+body[data-mode="150"] .hint code{font-family:var(--code);font-size:12px;background:#f1f5f3;border:1px solid #e6ece9;border-radius:5px;padding:1px 4px}
+
+/* ① Token 序列：单行 + 容器内横向滚动，Token 数量变化不改变高度 */
+body[data-mode="150"] .rpn-tokens{display:flex;flex-wrap:nowrap;gap:8px;align-items:center;height:52px;margin-top:4px;overflow-x:auto;overflow-y:hidden}
+body[data-mode="150"] .rpn-tokens::-webkit-scrollbar{height:8px}
+body[data-mode="150"] .rpn-tokens::-webkit-scrollbar-track{background:transparent}
+body[data-mode="150"] .rpn-tokens::-webkit-scrollbar-thumb{background:#d7e0db;border-radius:4px}
+body[data-mode="150"] .rpn-tok{flex:0 0 auto;min-width:38px;height:36px;padding:0 10px;border:1px solid #e2e7e4;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;font:15px var(--code);color:#3c4540}
+body[data-mode="150"] .rpn-tok.done{opacity:.5}
+body[data-mode="150"] .rpn-tok.current{background:#e4f3ec;border-color:#6fae8f;color:#126c4d;font-weight:700;box-shadow:0 0 0 3px #eaf5ef}
+body[data-mode="150"] .rpn-empty-cell{font-size:13px;color:#a0aaa4}
+
+/* ② 计算栈：栈顶在上；高度由 JS 按整条序列的最大栈深设定 */
+body[data-mode="150"] .rpn-stack{overflow-y:auto;overflow-x:hidden;border:1px solid var(--border);border-radius:12px;background:#fbfcfb;padding:8px;display:flex;flex-direction:column;gap:6px}
+body[data-mode="150"] .rpn-cell{flex:0 0 auto;height:40px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 10px;border:1px solid #dfe6e2;border-radius:10px;background:#fff;font:15px var(--code);color:#202321}
+body[data-mode="150"] .rpn-cell.top{background:#e4f3ec;border-color:#6fae8f;color:#126c4d}
+body[data-mode="150"] .rpn-cell.just{border-color:#4f9d78;box-shadow:0 0 0 3px #eaf5ef}
+body[data-mode="150"] .rpn-val{font-weight:600}
+body[data-mode="150"] .rpn-tags{display:flex;gap:4px;flex:0 0 auto}
+body[data-mode="150"] .rpn-tag{padding:3px 6px;border-radius:5px;background:#e5f3ec;color:#217451;font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:10px;line-height:1;white-space:nowrap}
+body[data-mode="150"] .rpn-tag.new{background:#fdf0d9;color:#8a5a12}
+
+/* 已弹出的操作数：单行固定高度，超出在容器内横向滚动 */
+body[data-mode="150"] .rpn-popped{display:flex;flex-wrap:nowrap;gap:7px;align-items:center;height:34px;margin-top:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+body[data-mode="150"] .rpn-popped::-webkit-scrollbar{display:none}
+body[data-mode="150"] .rpn-pchip{flex:0 0 auto;border:1px solid #e3e9e5;background:#fafcfb;border-radius:9px;padding:5px 9px;font:12px var(--code);color:#56635c;white-space:nowrap}
+body[data-mode="150"] .rpn-pempty{font-size:12px;color:#a0aaa4}
+
+/* ③ 当前运算面板：高度由 JS 按整条序列预计算，因此内部不再截断 */
+body[data-mode="150"] .rpn-calc{border:1px solid #e5ebe7;background:#f8faf9;border-radius:13px;padding:14px 17px;margin-top:4px;display:flex;flex-direction:column;gap:7px;overflow:hidden}
+body[data-mode="150"] .rpn-kv{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:10px;align-items:baseline;font-size:14px}
+body[data-mode="150"] .rpn-k{color:#66736d;white-space:nowrap}
+body[data-mode="150"] .rpn-v{font:15px var(--code);font-weight:600;color:#202321;overflow-wrap:anywhere}
+body[data-mode="150"] .rpn-expr{border-top:1px dashed #dde5e0;padding-top:8px;font:15px var(--code);color:#3f4a45;overflow-wrap:anywhere}
+body[data-mode="150"] .rpn-expr.ok{color:#126c4d;font-weight:600}
+body[data-mode="150"] .rpn-expr.muted{font-family:Inter,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;font-size:13px;color:#8d9892}
+body[data-mode="150"] .status.ok{border-color:#bcdcc9;background:#f4faf6}
+body[data-mode="150"] .rpn-meta{margin-top:6px;font-size:12px;color:#8d9892;min-height:16px}
+
+@media(max-width:540px){
+  body[data-mode="150"] .rpn-tok{min-width:34px;height:34px;padding:0 8px;font-size:14px}
+  body[data-mode="150"] .rpn-cell{padding:0 7px;font-size:14px;gap:4px}
+  body[data-mode="150"] .rpn-tag{font-size:9px;padding:3px 4px}
+  body[data-mode="150"] .rpn-kv{font-size:13px}
+  body[data-mode="150"] .rpn-v{font-size:14px}
+  body[data-mode="150"] .rpn-expr{font-size:14px}
+  body[data-mode="150"] .rpn-calc{padding:12px 13px}
+  body[data-mode="150"] .rpn-op{min-width:36px;height:32px;padding:0 8px;font-size:15px}
+  /* 窄屏控制按钮按内容取宽并禁止折行，避免「自动播放」被压成两行 */
+  body[data-mode="150"] .controls{gap:8px}
+  body[data-mode="150"] .controls button{flex:0 1 auto;min-width:0;padding:10px 12px;font-size:14px;white-space:nowrap}
+}
+
+/* ≤360px：三个控制按钮实测需要约 284px，而 320px 视口下可用宽度只有约 254px，
+   会把「自动播放」挤到第二行。这里略微收紧内边距与字号（仍在可读范围内），
+   保持三按钮同处一行，避免出现不自然的换行。仅 LC150 生效。 */
+@media(max-width:360px){
+  body[data-mode="150"] .controls{gap:6px}
+  body[data-mode="150"] .controls button{flex:0 1 auto;min-width:0;padding:9px 8px;font-size:13px;white-space:nowrap}
+}

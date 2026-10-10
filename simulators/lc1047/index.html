@@ -57,6 +57,11 @@ button{padding:11px 17px;border-radius:12px}.tokens{gap:9px;margin:25px 0 32px;m
 pre{font-family:var(--lab-code);font-size:clamp(13px,1.05vw,15px);line-height:2.05;padding:22px 14px;tab-size:4;font-variant-ligatures:none}
 pre .line{padding:0 12px;margin:0 -12px}.note{font-size:14px;line-height:1.85;margin-top:22px;padding-top:20px}
 .result code{font-family:var(--lab-code)}.bottom{margin-top:25px}
+/* v0.4.3: shared link typography, aligned with LC167 / LC15 / LC20 */
+.links{display:flex;gap:12px 24px;flex-wrap:wrap;align-items:center;margin-top:20px;font-size:16px;line-height:1.65}
+.links a{font-weight:500;color:var(--lab-accent);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.links a:hover{color:#125b41;text-decoration-thickness:2px}
+@media(max-width:560px){.links{font-size:15px;gap:10px 18px}}
 @media(max-width:1000px){.grid{grid-template-columns:1fr}.wrap{max-width:850px}.panel{padding:24px}}
 @media(max-width:560px){.wrap{padding:23px 15px 55px}.panel{padding:18px}.controls{gap:8px}.controls button{padding:10px 12px}.field{flex-wrap:wrap}.field button{width:100%}pre{font-size:12px;padding:14px 7px}}
 /* Shared complexity presentation, aligned with LC167 / LC15 */
@@ -79,13 +84,13 @@ pre .line{padding:0 12px;margin:0 -12px}.note{font-size:14px;line-height:1.85;ma
 .range{margin:16px 0 7px}
 .foot{line-height:1.5}
 .result{margin-top:16px;padding:11px 14px}
-.note{margin-top:18px;padding-top:16px;line-height:1.7}
+.explain-title{margin:18px 0 8px;padding-top:16px;font-size:15px;color:var(--text)}.explain-list{margin:0;padding-left:21px;font-size:15px;line-height:1.75;color:var(--muted);display:flex;flex-direction:column;gap:7px}.explain-list strong{color:var(--text)}
 @media(max-width:560px){.tokens{margin:12px 0 18px}.stack{margin:9px 0 16px;min-height:48px}.controls{margin-top:14px}.status{min-height:68px}}
 </style>
 </head>
 <body><main class="wrap"><a href="../../index.html" style="display:inline-block;margin-bottom:20px;color:#327e5e;text-decoration:none;font-size:14px">← 返回算法实验室</a><div class="eyebrow">ALGORITHM VISUAL LAB / 001</div><h1>删除字符串中的所有相邻重复项</h1><p>LeetCode 1047 · 通过栈，观察字符如何入栈、配对消除，以及新的相邻字符如何继续消除。</p>
 <div class="grid"><section class="panel"><h2>交互式栈模拟器 <span class="pill">可自定义输入</span></h2><div class="field"><input id="source" maxlength="40" value="abbaca" aria-label="输入字符串" spellcheck="false"><button id="reset">重新开始</button></div><p class="hint">输入最多 40 个字符。修改输入后会自动重置步骤。</p><div class="label">输入序列（绿色为当前字符）</div><div class="tokens" id="tokens"></div><div class="label">当前栈（右侧为栈顶）</div><div class="stack" id="stack"></div><div id="status" class="status" aria-live="polite"></div><div class="controls"><button id="prev">← 上一步</button><button class="primary" id="next">下一步 →</button><button id="play">▶ 自动播放</button></div><input id="seek" class="range" type="range" min="0" max="6" value="0" aria-label="跳转步骤"><div class="foot"><span id="count">0 / 6</span><span>每一步处理一个字符</span></div><div class="result"><div><div class="label">当前栈内容 / 当前结果</div><code id="result">""</code></div><button id="copy">复制</button></div></section>
-<section class="panel"><h2>对应 Python 代码</h2><pre id="code" aria-label="Python 代码"></pre><p class="note">核心规则：<strong>当前字符等于栈顶，就弹出栈顶；否则将当前字符压入栈。</strong> 栈顶相当于当前保留字符串的最后一个字符，因此可以处理连续消除。</p><section class="complexity" aria-label="复杂度分析"><h3 class="complexity-title">复杂度</h3><ul><li><strong>时间：</strong>O(n)。每个字符最多入栈一次、出栈一次，最后拼接结果也是 O(n)。</li><li><strong>空间：</strong>O(n)。栈最坏需要保存全部字符；输出字符串另计。</li></ul></section></section></div><div class="bottom">提示：此演示在浏览器本地运行，不会上传你的输入。单文件 HTML，可部署至 GitHub Pages。</div></main>
+<section class="panel"><h2>对应 Python 代码</h2><pre id="code" aria-label="Python 代码"></pre><h3 class="explain-title">观察重点</h3><ul class="explain-list"><li>栈里保存的是「当前保留下来的字符」，栈顶就是保留串的最后一个字符。</li><li>当前字符<strong>等于栈顶</strong>时，弹出栈顶：这一对相邻重复字符被一起消除。</li><li>当前字符<strong>不等于栈顶</strong>时，把它压入栈，它成为新的末尾字符。</li><li>消除之后可能让新的栈顶与下一个字符再次相等，所以连续重复会被<strong>连锁消除</strong>。</li></ul><section class="complexity" aria-label="复杂度分析"><h3 class="complexity-title">复杂度</h3><ul><li><strong>时间：</strong>O(n)。每个字符最多入栈一次、出栈一次，最后拼接结果也是 O(n)。</li><li><strong>空间：</strong>O(n)。栈最坏需要保存全部字符；输出字符串另计。</li></ul></section><div class="links"><a href="https://leetcode.cn/problems/remove-all-adjacent-duplicates-in-string/" target="_blank" rel="noopener noreferrer">LeetCode 原题 ↗</a></div></section></div><div class="bottom">提示：此演示在浏览器本地运行，不会上传你的输入。单文件 HTML，可部署至 GitHub Pages。</div></main>
 <script>
 (()=>{
 const $=id=>document.getElementById(id);
